@@ -52,3 +52,14 @@ jobs:
           docker tag itsmeynr/user-service:${{ github.sha }} itsmeynr/user-service:latest
           docker push itsmeynr/user-service:${{ github.sha }}
           docker push itsmeynr/user-service:latest
+
+      - name: Update GitOps repo with new image tag
+        run: |
+          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/ynraws/gitops.git gitops-repo
+          cd gitops-repo
+          sed -i "s|image: itsmeynr/user-service:.*|image: itsmeynr/user-service:${{ github.sha }}|" user-service/deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add user-service/deployment.yaml
+          git commit -m "Update user-service image to ${{ github.sha }}" || echo "No changes to commit"
+          git push
