@@ -14,8 +14,12 @@ let nextUserId = 2;
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const user = users.find(u => u.username === username);
+  const { email, username, password } = req.body;
+  const identifier = email || username;
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'email and password required' });
+  }
+  const user = users.find(u => u.username === identifier);
   if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -24,14 +28,22 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: 'username and password required' });
+  const { email, username, password, firstName, lastName } = req.body;
+  const identifier = email || username;
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'email and password required' });
   }
-  if (users.find(u => u.username === username)) {
-    return res.status(409).json({ error: 'Username already exists' });
+  if (users.find(u => u.username === identifier)) {
+    return res.status(409).json({ error: 'Account already exists' });
   }
-  const user = { id: nextUserId++, username, passwordHash: bcrypt.hashSync(password, 8) };
+  const user = {
+    id: nextUserId++,
+    username: identifier,
+    email: email || null,
+    firstName: firstName || null,
+    lastName: lastName || null,
+    passwordHash: bcrypt.hashSync(password, 8)
+  };
   users.push(user);
   const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
   res.status(201).json({ token });
