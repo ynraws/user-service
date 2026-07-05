@@ -13,7 +13,7 @@ let nextUserId = 2;
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.post('/auth/login', (req, res) => {
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
   if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
@@ -23,7 +23,7 @@ app.post('/auth/login', (req, res) => {
   res.json({ token });
 });
 
-app.post('/auth/register', (req, res) => {
+app.post('/register', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'username and password required' });
