@@ -62,3 +62,4 @@ app.get('/me', (req, res) => {
 
 app.listen(PORT, () => console.log('user-service running on port ' + PORT));
 // v2 - canary test
+// v2 - canary test
