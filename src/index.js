@@ -6,13 +6,14 @@ app.use(express.json());
 const PORT = process.env.PORT || 4001;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod';
 
-const users = [
+let users = [
   { id: 1, username: 'reddy70007', passwordHash: bcrypt.hashSync('password123', 8) }
 ];
+let nextUserId = 2;
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.post('/login', (req, res) => {
+app.post('/auth/login', (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
   if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
@@ -20,6 +21,20 @@ app.post('/login', (req, res) => {
   }
   const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
   res.json({ token });
+});
+
+app.post('/auth/register', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password required' });
+  }
+  if (users.find(u => u.username === username)) {
+    return res.status(409).json({ error: 'Username already exists' });
+  }
+  const user = { id: nextUserId++, username, passwordHash: bcrypt.hashSync(password, 8) };
+  users.push(user);
+  const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+  res.status(201).json({ token });
 });
 
 app.get('/me', (req, res) => {
@@ -33,4 +48,4 @@ app.get('/me', (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`user-service running on port ${PORT}`));
+app.listen(PORT, () => console.log('user-service running on port ' + PORT));
